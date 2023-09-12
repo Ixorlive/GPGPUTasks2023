@@ -29,16 +29,20 @@ void reportError(cl_int err, const std::string &filename, int line) {
 
 #define OCL_SAFE_CALL(expr) reportError(expr, __FILE__, __LINE__)
 
-cl_device_id selectDevice(bool prefGPU = true) {
+enum DevicePreference
+{
+    PREFER_CPU,
+    PREFER_GPU
+};
+
+cl_device_id selectDevice(DevicePreference preference = DevicePreference::PREFER_GPU) {
     cl_uint platformsCount = 0;
     OCL_SAFE_CALL(clGetPlatformIDs(0, nullptr, &platformsCount));
     std::vector<cl_platform_id> platforms(platformsCount);
     OCL_SAFE_CALL(clGetPlatformIDs(platformsCount, platforms.data(), nullptr));
 
-    cl_device_id best_device_id = nullptr;
-
-    size_t nameSize;
-    std::vector<char> nameData;
+    cl_device_id gpu_device = nullptr;
+    cl_device_id cpu_device = nullptr;
 
     for (const auto &platform : platforms) {
         cl_uint devicesCount = 0;
@@ -51,28 +55,34 @@ cl_device_id selectDevice(bool prefGPU = true) {
 
         for (const auto &device : devices) {
             cl_device_type deviceType;
-
             OCL_SAFE_CALL(clGetDeviceInfo(device, CL_DEVICE_TYPE, sizeof(cl_device_type), &deviceType, nullptr));
+            // ===== Can be removed, only for my laptop !!! =====
+            size_t nameSize;
             OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, 0, nullptr, &nameSize));
+            std::vector<char> nameData;
             nameData.resize(nameSize);
             OCL_SAFE_CALL(clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, nameSize, nameData.data(), nullptr));
 
             std::string vendor(nameData.begin(), nameData.end());
-
-            //sorry I just want to choose NVIDIA instead of Intel (I have dual GPU)
             if (vendor.find("NVIDIA") != std::string::npos) {
                 return device;
-            } else if ((deviceType & CL_DEVICE_TYPE_GPU && prefGPU) || !prefGPU) {
-                best_device_id = device;
+            }
+            // =============================================
+            if (!gpu_device && (deviceType & CL_DEVICE_TYPE_GPU)) {
+                gpu_device = device;
+            } else if (!cpu_device && (deviceType & CL_DEVICE_TYPE_CPU)) {
+                cpu_device = device;
             }
         }
     }
 
-    if (best_device_id == nullptr) {
+    if (!gpu_device && !cpu_device) {
         throw std::runtime_error("No suitable OpenCL device found.");
     }
-
-    return best_device_id;
+  if (!cpu_device || !gpu_device) {
+    return !cpu_device ? gpu_device : cpu_device;
+  }
+  return preference == DevicePreference::PREFER_GPU ? gpu_device : cpu_device;
 }
 
 int main() {
