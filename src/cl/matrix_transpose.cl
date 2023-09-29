@@ -8,7 +8,7 @@
     Result: 
         float *res -  transposed matrix
 */
-__kernel void matrix_transpose(__global float *matrix, __global float *res, const uint M, const uint K) {
+__kernel void matrix_transpose(const __global float *matrix, __global float *res, const uint M, const uint K) {
     const int g_col = get_global_id(0);
     const int g_row = get_global_id(1);
 
@@ -16,13 +16,13 @@ __kernel void matrix_transpose(__global float *matrix, __global float *res, cons
 
     const int l_col = get_local_id(0);
     const int l_row = get_local_id(1);
-    
+
     if (g_row < M && g_col < K)
         tile[l_row][l_col] = matrix[g_row * K + g_col];
 
     barrier(CLK_LOCAL_MEM_FENCE);
-    
-    const int diff = l_row - l_col; 
+
+    const int diff = l_row - l_col;
     const int res_row = g_col + diff;
     const int res_col = g_row - diff;
     if (res_row < K && res_col < M) {
@@ -30,7 +30,8 @@ __kernel void matrix_transpose(__global float *matrix, __global float *res, cons
     }
 }
 
-__kernel void matrix_transpose_no_coalesced(__global float *matrix, __global float *res, const uint M, const uint K) {
+__kernel void matrix_transpose_no_coalesced(const __global float *matrix, __global float *res, const uint M,
+                                            const uint K) {
     const int i = get_global_id(0);
     const int j = get_global_id(1);
 
