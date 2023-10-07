@@ -17,6 +17,8 @@ __kernel void sort_workgroup(__global float *arr, __global float *res, const uin
     // thanks to the l1 cache it should be optimal?
     uint res_id = 0;
     for (int i = 0; i < g_size; ++i) {
+        if (start_index + i >= n)
+            break;
         if (arr[start_index + i] < el || (arr[start_index + i] == el && i < l_id))
             ++res_id;
     }
@@ -52,6 +54,3 @@ __kernel void merge(__global float *arr, __global float *res, const uint n, cons
     pos += binary_search(arr + block_size * (block_id ^ 1), block_size, el, is_second ^ 1);
     res[pos] = el;
 }
-
-// 4
-// 1 2 3 4 4 4 5 5 5 6 6 7 8

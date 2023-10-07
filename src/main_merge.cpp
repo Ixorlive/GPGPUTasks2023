@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     context.init(device.device_id_opencl);
     context.activate();
 
-    int benchmarkingIters = 1; // TODO: fix
+    int benchmarkingIters = 1;// TODO: fix
     unsigned int n = 32 * 1024 * 1024;
     std::vector<float> as(n, 0);
     FastRandom r(n);
@@ -70,10 +70,10 @@ int main(int argc, char **argv) {
             // sort subarrays with size equal to work group size
             sort_workgroup.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, bs_gpu, n);
             std::swap(as_gpu, bs_gpu);
-            unsigned int part_size = workGroupSize;
-            while (part_size < n) {
-                merge.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, bs_gpu, n, part_size);
-                part_size <<= 1;
+            unsigned int block_size = workGroupSize;
+            while (block_size < n) {
+                merge.exec(gpu::WorkSize(workGroupSize, global_work_size), as_gpu, bs_gpu, n, block_size);
+                block_size <<= 1;
                 std::swap(as_gpu, bs_gpu);
             }
             t.nextLap();
