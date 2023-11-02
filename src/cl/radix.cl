@@ -20,6 +20,7 @@ __kernel void radix(__global const uint *as, __global const uint *prefix_matrix,
     }
     
     const size_t k = extract_value(as[g_id], iter);
+
     const size_t group_id = get_group_id(0);
     const size_t l_id = get_local_id(0);
     
@@ -28,7 +29,7 @@ __kernel void radix(__global const uint *as, __global const uint *prefix_matrix,
     if (group_id + k > 0) {
         idx += prefix_matrix[k * num_cols + group_id - 1];
     }
-    
+
     const size_t work_size = get_local_size(0);
     const size_t start_pos = group_id * work_size;
 
@@ -49,11 +50,14 @@ __kernel void fill_count_matrix(__global const uint *as, __global uint *matrix, 
     }
     const size_t group_id = get_group_id(0);
     const size_t l_id = get_local_id(0);
+    const size_t l_size = get_local_size(0);
     
     __local uint local_matrix[NUM_VALS];
     
-    if (l_id < NUM_VALS) {
-        local_matrix[l_id] = 0;
+    size_t l_id_offset = l_id;
+    while (l_id_offset < NUM_VALS) {
+        local_matrix[l_id_offset] = 0;
+        l_id_offset += l_size;
     }
     
     barrier(CLK_LOCAL_MEM_FENCE);
@@ -62,8 +66,10 @@ __kernel void fill_count_matrix(__global const uint *as, __global uint *matrix, 
     
     barrier(CLK_LOCAL_MEM_FENCE);
 
-    if (l_id < NUM_VALS) {
-        matrix[group_id * NUM_VALS + l_id] = local_matrix[l_id];
+    l_id_offset = l_id;
+    while (l_id_offset < NUM_VALS) {
+        matrix[group_id * NUM_VALS + l_id_offset] = local_matrix[l_id];
+        l_id_offset += l_size;
     }
 }
 
