@@ -1703,12 +1703,13 @@ TEST(LBVH, GPU) {
                 n_super_good_dvy++;
 
             double rel_eps = 0.5;
-            EXPECT_NEAR(pxs[i], pxs_cpu[i], rel_eps * std::abs(pxs_cpu[i]));
-            EXPECT_NEAR(pys[i], pys_cpu[i], rel_eps * std::abs(pys_cpu[i]));
-            EXPECT_NEAR(vxs[i], vxs_cpu[i], rel_eps * std::abs(vxs_cpu[i]));
-            EXPECT_NEAR(vys[i], vys_cpu[i], rel_eps * std::abs(vys_cpu[i]));
-            EXPECT_NEAR(dvx[i], dvx_cpu[i], rel_eps * std::abs(dvx_cpu[i]));
-            EXPECT_NEAR(dvy[i], dvy_cpu[i], rel_eps * std::abs(dvy_cpu[i]));
+            float MIN_DELTA = 1e-8f;
+            EXPECT_NEAR(pxs[i], pxs_cpu[i], rel_eps * std::max(std::abs(pxs_cpu[i]), MIN_DELTA));
+            EXPECT_NEAR(pys[i], pys_cpu[i], rel_eps * std::max(std::abs(pys_cpu[i]), MIN_DELTA));
+            EXPECT_NEAR(vxs[i], vxs_cpu[i], rel_eps * std::max(std::abs(vxs_cpu[i]), MIN_DELTA));
+            EXPECT_NEAR(vys[i], vys_cpu[i], rel_eps * std::max(std::abs(vys_cpu[i]), MIN_DELTA));
+            EXPECT_NEAR(dvx[i], dvx_cpu[i], rel_eps * std::max(std::abs(dvx_cpu[i]), MIN_DELTA));
+            EXPECT_NEAR(dvy[i], dvy_cpu[i], rel_eps * std::max(std::abs(dvy_cpu[i]), MIN_DELTA));
         }
 
         EXPECT_GE(n_super_good_pxs, 0.99 * N);
